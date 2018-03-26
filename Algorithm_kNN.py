@@ -38,15 +38,15 @@ class Algorithm_kNN(object):
             result[label] = result.get(label, 0) + 1
         
         #对预测的结果进行排序，取出最优结果
-        result_order = sorted(result.items(), key=lambda x: x[0], reverse=True)
-        return result_order[0][0]
+        resultOrder = sorted(result.items(), key=lambda x: x[0], reverse=True)
+        return resultOrder[0][0]
         
 
 if __name__ == '__main__':
-    sample_data = np.array([[0, 0], [0, 0.1], [1, 1], [1.1, 1]])
+    sampleData = np.array([[0, 0], [0, 0.1], [1, 1], [1.1, 1]])
     label = ['A', 'A', 'B', 'B']
-    text_data = np.array([[0.1, 0.2], [1, 2], [100, 100], [-1, -1]])
-    knn = Algorithm_kNN(sample_data, label, 2)
-    for data in knn.autoNorm(text_data):
-        target_lable = knn.run(data)
-        print(data, target_lable)
+    textData = np.array([[0.1, 0.2], [1, 2], [100, 100], [-1, -1]])
+    knn = Algorithm_kNN(sampleData, label, 2)
+    for data in knn.autoNorm(textData):
+        targetLable = knn.run(data)
+        print(data, targetLable)
