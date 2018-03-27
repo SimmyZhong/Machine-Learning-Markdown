@@ -50,7 +50,7 @@ class DecisionTree(object):
                 prob = len(result_data) / float(len(sample_data))
                 shannoEnt_new += prob * self.calcShannonEnt(result_data)
             if shannoEnt_base > shannoEnt_new:
-                
+                pass
 
 if __name__ == '__main__':
     sample_data = [[1, 1, 'yes'], [1, 1, 'yes'], [1, 0, 'no'], [0, 1, 'no'], [0, 1, 'no']]
