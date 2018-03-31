@@ -76,6 +76,8 @@ class LogisticSigmoidClassifier(object):
         return weights
 
     def classify(self, data, weights):
+        """分类函数"""
+
         z = self.sigmoid(sum(weights * data))
         if z > 0.5:
             return 1.0
@@ -83,6 +85,8 @@ class LogisticSigmoidClassifier(object):
             return 0.0
 
     def classifierTest(self, algorithm, sample_data, sample_labels, test_data, test_labels, times=10):
+        """测试分类器的错误率"""
+
         num_data = len(test_data)
         rate = 0
         for j in range(times):
