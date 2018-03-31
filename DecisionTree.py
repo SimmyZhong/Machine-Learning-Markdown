@@ -1,4 +1,3 @@
-import numpy as np
 from math import log
 
 
@@ -98,4 +97,3 @@ if __name__ == '__main__':
 #     print(tree.majorityCnt([1, 1, 2, 3, 3, 3, 4, 4, 4, 4]))
 #     print(tree.createTree(sample_data, labels))
 
-            
