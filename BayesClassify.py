@@ -59,6 +59,14 @@ class BayesClassifyTrainNB0(object):
         p1_words = sub_data_1 / num_data_1
         return p1, p0_words, p1_words
 
+    def ClassifyNB(self, test_data, p0_words, p1_words, p1):
+        p1 = sum(test_data * p1_words) + log(p1)
+        p0 = sum(test_data * p0_words) + log((1-p1))
+        if p1 > p0:
+            return 1
+        else:
+            return 0
+
 
 if __name__ == '__main__':
     sample_data = [['my', 'dog', 'has', 'flea', 'problems', 'help', 'please'],
@@ -74,4 +82,6 @@ if __name__ == '__main__':
         bags_words = list()
         bags_words.append(bayes_classify.createBagOfWords(vocab_list, data))
     p1, p0_words, p1_words = bayes_classify.tranNB0(sample_data, data_category)
-    print(p1, p0_words, p1_words)
+    test_data = bayes_classify.createBagOfWords(vocab_list, ['love', 'my', 'dalmation'])
+    result = bayes_classify.ClassifyNB(test_data, p0_words, p1_words, p1)
+    print('该测试集的分类结果是:{result}'.format(result=result))
