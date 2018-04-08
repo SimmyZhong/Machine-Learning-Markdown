@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from numpy import mat, ones, zeros, multiply
 import random
+import matplotlib.pylab as plt
 
 
 class SVMClassifier(object):
@@ -137,6 +138,42 @@ class SVMClassifier(object):
             print("iteration number: %d" % iter_times)
         return alpha, b
 
+    def calcW(self, alphas, sample_data, labels):
+        """求解W"""
+
+        X = mat(sample_data)
+        labelMat = mat(labels).transpose()
+        m, n = np.shape(X)
+        w = zeros((n, 1))
+        for i in range(m):
+            w += multiply(alphas[i] * labelMat[i], X[i, :].T)
+        return w
+
+    def plotShowFit(self, sample_data, labels, w, b):
+        """利用matplotlib展示"""
+
+        x1, y1 = [], []
+        x2, y2 = [], []
+        for i in range(len(sample_data)):
+            if int(labels[i]) == 1:
+                x1.append(sample_data[i][0])  # 取出类别为1的数据集的特征1
+                y1.append(sample_data[i][1])  # 取出类别为1的数据集的特征2
+            else:
+                x2.append(sample_data[i][0])
+                y2.append(sample_data[i][1])
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.scatter(x1, y1, s=30, c='red', marker='s')
+        ax.scatter(x2, y2, s=30, c='green')
+        x = np.arange(-3.0, 3.0, 0.1)
+        # weights = weights.getA()
+        # 此处设定Sigmoid函数的值为0.因为0是两个分类（0和1）的分界处。因此设定0 = W0X0 + W1X1 + W2X2
+        y = w * x + b
+        ax.plot(x, y)
+        plt.xlabel('X1')
+        plt.ylabel('X2')
+        plt.show()
+
 
 if __name__ == "__main__":
     sample_data = ''
@@ -144,5 +181,5 @@ if __name__ == "__main__":
     svmClassfier = SVMClassifier()
     sample_data, labels = svmClassfier.readTxt('svm_simple_test.txt')
     alpha, b = svmClassfier.smoAlgorithm(sample_data=sample_data, labels=labels, constant=0.6, toler=0.001, max_iter=40)
-    print(alpha)
-    print(b)
+    w = svmClassfier.calcW(alpha, sample_data, labels)
+    svmClassfier.plotShowFit(sample_data, labels, w, b)
