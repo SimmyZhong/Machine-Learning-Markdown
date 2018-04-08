@@ -4,24 +4,37 @@ from numpy import mat, ones, zeros, multiply
 import random
 
 
-class SVMClassifire(object):
+class SVMClassifier(object):
     """SVM分类器实现"""
     
-    def __init__(self, sample_data, labels, constant, toler, max_iter):
-        """
-            args:
-            sample_data 样本集
-            labels 分类标签
-            constant 松弛变量C
-            toler 容错率
-            max_iter 最大迭代次数
-        """
+    # def __init__(self, sample_data, labels, constant, toler, max_iter):
+    #     """
+    #         args:
+    #         sample_data 样本集
+    #         labels 分类标签
+    #         constant 松弛变量C
+    #         toler 容错率
+    #         max_iter 最大迭代次数
+    #     """
+    #
+    #     self.sample_data = mat(sample_data)
+    #     self.labels = mat(labels)
+    #     self.constant = constant
+    #     self.toler = toler
+    #     self.max_iter = max_iter
 
-        self.sample_data = mat(sample_data) 
-        self.labels = mat(labels) 
-        self.constant = constant
-        self.toler = toler
-        self.max_iter = max_iter 
+    def readTxt(self, file):
+        """读取数据源"""
+
+        path = 'sample_data/' + file
+        with open(path) as file:
+            sample_data = list()
+            labels = list()
+            for line in file.readlines():
+                data = line.strip().split('\t')
+                sample_data.append([float(data[0]), float(data[1])])
+                labels.append(float(data[2]))
+        return sample_data, labels
 
     def selctJ(self, i, m):
         """随机选择一个不等于i的点"""
@@ -42,20 +55,20 @@ class SVMClassifire(object):
             return value
     
     def smoAlgorithm(self, sample_data, labels, constant, toler, max_iter):
-        """SMO算法"""
+        """SMO算法简单实现"""
         
         sample_data = mat(sample_data)
-        labels = mat(labels)
+        labels = mat(labels).transpose()
         m, n = np.shape(sample_data) 
 
-        alpha = zeros((m, 1)) # 初始化α
+        alpha = mat(zeros((m, 1))) # 初始化α
         iter_times = 0 # 初始化迭代次数
         b = 0
 
         while (iter_times < max_iter):
             alpha_change_times = 0
             for i in range(m):
-                fx_i = float(multiply(alpha * labels.transpose()) * (sample_data * sample_data[i, :].T)) + b
+                fx_i = float(multiply(alpha, labels).T * (sample_data * sample_data[i, :].T)) + b
                 Ei = fx_i - float(labels[i])
                 # 此处解释不是很懂https://github.com/apachecn/MachineLearning/blob/master/src/py2.x/6.SVM/svm-simple.py
                 # 约束条件 (KKT条件是解决最优化问题的时用到的一种方法。
@@ -70,7 +83,7 @@ class SVMClassifire(object):
                 '''
                 if ((Ei * labels[i] < -toler) and alpha[i] < constant) or ((Ei * labels[i] > toler) and alpha[i] > 0):
                     j = self.selctJ(i, m)
-                    fx_j = float(multiply(alpha * labels.transpose()) * (sample_data * sample_data[j, :].T)) + b
+                    fx_j = float(multiply(alpha, labels).T * (sample_data * sample_data[j, :].T)) + b
                     Ej = fx_j - float(labels[j])
                     alpha_i_old = alpha[i].copy()
                     alpha_j_old = alpha[j].copy()
@@ -123,3 +136,13 @@ class SVMClassifire(object):
                 iter_times = 0
             print("iteration number: %d" % iter_times)
         return alpha, b
+
+
+if __name__ == "__main__":
+    sample_data = ''
+    labels = ''
+    svmClassfier = SVMClassifier()
+    sample_data, labels = svmClassfier.readTxt('svm_simple_test.txt')
+    alpha, b = svmClassfier.smoAlgorithm(sample_data=sample_data, labels=labels, constant=0.6, toler=0.001, max_iter=40)
+    print(alpha)
+    print(b)
