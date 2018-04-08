@@ -99,3 +99,27 @@ class SVMClassifire(object):
                         print('j 变化量太小')
                         continue
                     alpha[i] += (alpha_j_old - alpha[j]) * labels[j] / labels[i]
+                    # 这个地方没看懂
+                    # w= Σ[1~n] ai*yi*xi => b = yj- Σ[1~n] ai*yi(xi*xj)
+                    # 所以：  b1 - b = (y1-y) - Σ[1~n] yi*(a1-a)*(xi*x1)
+                    # 为什么减2遍？ 因为是 减去Σ[1~n]，正好2个变量i和j，所以减2遍
+                    b1 = b - Ei - labels[i] * (alpha[i] - alpha_i_old) * sample_data[i, :] * sample_data[i, :].T - \
+                        labels[j] * (alpha[j] - alpha_i_old) * sample_data[j, :] * sample_data[j, :].T
+                    b2 = b - Ej - labels[i] * (alpha[i] - alpha_i_old) * sample_data[i, :] * sample_data[i, :].T - \
+                         labels[j] * (alpha[j] - alpha_i_old) * sample_data[j, :] * sample_data[j, :].T
+                    if (0 < alpha[i]) and (constant > alpha[i]):
+                        b = b1
+                    elif (0 < alpha[j]) and (constant > alpha[j]):
+                        b = b2
+                    else:
+                        b = (b1 + b2) / 2.0
+                    # 优化了alpha,优化次数+1
+                    alpha_change_times += 1
+                    print("iter: %d i:%d, pairs changed %d" % (iter_times, i, alpha_change_times))
+            # 若优化次数为0，迭代次数+1，否则重置迭代次数。若迭代iter_times后alpha仍无优化，则表示其已收敛
+            if alpha_change_times == 0:
+                iter_times += 1
+            else:
+                iter_times = 0
+            print("iteration number: %d" % iter_times)
+        return alpha, b
