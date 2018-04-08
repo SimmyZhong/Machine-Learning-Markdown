@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
-from numpy import mat, ones, zeros, multiply
+from numpy import mat, ones, zeros, multiply, shape, arange, array
 import random
 import matplotlib.pylab as plt
 
 
 class SVMClassifier(object):
     """SVM分类器实现"""
-    
+
     # def __init__(self, sample_data, labels, constant, toler, max_iter):
     #     """
     #         args:
@@ -40,7 +40,7 @@ class SVMClassifier(object):
     def selctJ(self, i, m):
         """随机选择一个不等于i的点"""
 
-        j = i 
+        j = i
         while (j == i):
             j = random.choice(range(m))
         return j
@@ -54,16 +54,16 @@ class SVMClassifier(object):
             return H
         else:
             return value
-    
+
     def smoAlgorithm(self, sample_data, labels, constant, toler, max_iter):
         """SMO算法简单实现"""
-        
+
         sample_data = mat(sample_data)
         labels = mat(labels).transpose()
-        m, n = np.shape(sample_data) 
+        m, n = np.shape(sample_data)
 
-        alpha = mat(zeros((m, 1))) # 初始化α
-        iter_times = 0 # 初始化迭代次数
+        alpha = mat(zeros((m, 1)))  # 初始化α
+        iter_times = 0  # 初始化迭代次数
         b = 0
 
         while (iter_times < max_iter):
@@ -101,8 +101,8 @@ class SVMClassifier(object):
                         print('L==H')
                         continue
 
-                    eta = 2.0 * sample_data[i, :] * sample_data[j, :].T - sample_data[i,: ] * sample_data[i,: ].T - \
-                        sample_data[j, :] * sample_data[j, :].T
+                    eta = 2.0 * sample_data[i, :] * sample_data[j, :].T - sample_data[i, :] * sample_data[i, :].T - \
+                          sample_data[j, :] * sample_data[j, :].T
 
                     if eta >= 0:
                         print('eta>=0')
@@ -118,7 +118,7 @@ class SVMClassifier(object):
                     # 所以：  b1 - b = (y1-y) - Σ[1~n] yi*(a1-a)*(xi*x1)
                     # 为什么减2遍？ 因为是 减去Σ[1~n]，正好2个变量i和j，所以减2遍
                     b1 = b - Ei - labels[i] * (alpha[i] - alpha_i_old) * sample_data[i, :] * sample_data[i, :].T - \
-                        labels[j] * (alpha[j] - alpha_i_old) * sample_data[j, :] * sample_data[j, :].T
+                         labels[j] * (alpha[j] - alpha_i_old) * sample_data[j, :] * sample_data[j, :].T
                     b2 = b - Ej - labels[i] * (alpha[i] - alpha_i_old) * sample_data[i, :] * sample_data[i, :].T - \
                          labels[j] * (alpha[j] - alpha_i_old) * sample_data[j, :] * sample_data[j, :].T
                     if (0 < alpha[i]) and (constant > alpha[i]):
@@ -149,29 +149,42 @@ class SVMClassifier(object):
             w += multiply(alphas[i] * labelMat[i], X[i, :].T)
         return w
 
-    def plotShowFit(self, sample_data, labels, w, b):
-        """利用matplotlib展示"""
+    def plotfig_SVM(self, xMat, yMat, ws, b, alphas):
+        """
+        参考地址：
+           http://blog.csdn.net/maoersong/article/details/24315633
+           http://www.cnblogs.com/JustForCS/p/5283489.html
+           http://blog.csdn.net/kkxgx/article/details/6951959
+        """
 
-        x1, y1 = [], []
-        x2, y2 = [], []
-        for i in range(len(sample_data)):
-            if int(labels[i]) == 1:
-                x1.append(sample_data[i][0])  # 取出类别为1的数据集的特征1
-                y1.append(sample_data[i][1])  # 取出类别为1的数据集的特征2
-            else:
-                x2.append(sample_data[i][0])
-                y2.append(sample_data[i][1])
+        xMat = mat(xMat)
+        yMat = mat(yMat)
+
+        # b原来是矩阵，先转为数组类型后其数组大小为（1,1），所以后面加[0]，变为(1,)
+        b = array(b)[0]
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.scatter(x1, y1, s=30, c='red', marker='s')
-        ax.scatter(x2, y2, s=30, c='green')
-        x = np.arange(-3.0, 3.0, 0.1)
-        # weights = weights.getA()
-        # 此处设定Sigmoid函数的值为0.因为0是两个分类（0和1）的分界处。因此设定0 = W0X0 + W1X1 + W2X2
-        y = w * x + b
+
+        # 注意flatten的用法
+        ax.scatter(xMat[:, 0].flatten().A[0], xMat[:, 1].flatten().A[0])
+
+        # x最大值，最小值根据原数据集dataArr[:, 0]的大小而定
+        x = arange(-1.0, 10.0, 0.1)
+
+        # 根据x.w + b = 0 得到，其式子展开为w0.x1 + w1.x2 + b = 0, x2就是y值
+        y = (-b - ws[0, 0] * x) / ws[1, 0]
         ax.plot(x, y)
-        plt.xlabel('X1')
-        plt.ylabel('X2')
+
+        for i in range(shape(yMat[0, :])[1]):
+            if yMat[0, i] > 0:
+                ax.plot(xMat[i, 0], xMat[i, 1], 'cx')
+            else:
+                ax.plot(xMat[i, 0], xMat[i, 1], 'kp')
+
+        # 找到支持向量，并在图中标红
+        for i in range(len(alpha)):
+            if alphas[i] > 0.0:
+                ax.plot(xMat[i, 0], xMat[i, 1], 'ro')
         plt.show()
 
 
@@ -180,6 +193,6 @@ if __name__ == "__main__":
     labels = ''
     svmClassfier = SVMClassifier()
     sample_data, labels = svmClassfier.readTxt('svm_simple_test.txt')
-    alpha, b = svmClassfier.smoAlgorithm(sample_data=sample_data, labels=labels, constant=0.6, toler=0.001, max_iter=40)
+    alpha, b = svmClassfier.smoAlgorithm(sample_data=sample_data, labels=labels, constant=0.01, toler=0.001, max_iter=500)
     w = svmClassfier.calcW(alpha, sample_data, labels)
-    svmClassfier.plotShowFit(sample_data, labels, w, b)
+    svmClassfier.plotfig_SVM(sample_data, labels, w, b, alpha)
