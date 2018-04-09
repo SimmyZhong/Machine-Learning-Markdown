@@ -112,15 +112,15 @@ class SVMClassifier(object):
                     if (abs(alpha[j] - alpha_j_old) < 0.00001):
                         print('j 变化量太小')
                         continue
-                    alpha[i] += (alpha_j_old - alpha[j]) * labels[j] / labels[i]
+                    alpha[i] += (alpha_j_old - alpha[j]) * labels[j] * labels[i]
                     # 这个地方没看懂
                     # w= Σ[1~n] ai*yi*xi => b = yj- Σ[1~n] ai*yi(xi*xj)
                     # 所以：  b1 - b = (y1-y) - Σ[1~n] yi*(a1-a)*(xi*x1)
                     # 为什么减2遍？ 因为是 减去Σ[1~n]，正好2个变量i和j，所以减2遍
                     b1 = b - Ei - labels[i] * (alpha[i] - alpha_i_old) * sample_data[i, :] * sample_data[i, :].T - \
-                         labels[j] * (alpha[j] - alpha_i_old) * sample_data[j, :] * sample_data[j, :].T
-                    b2 = b - Ej - labels[i] * (alpha[i] - alpha_i_old) * sample_data[i, :] * sample_data[i, :].T - \
-                         labels[j] * (alpha[j] - alpha_i_old) * sample_data[j, :] * sample_data[j, :].T
+                         labels[j] * (alpha[j] - alpha_j_old) * sample_data[i, :] * sample_data[j, :].T
+                    b2 = b - Ej - labels[i] * (alpha[i] - alpha_i_old) * sample_data[i, :] * sample_data[j, :].T - \
+                         labels[j] * (alpha[j] - alpha_j_old) * sample_data[j, :] * sample_data[j, :].T
                     if (0 < alpha[i]) and (constant > alpha[i]):
                         b = b1
                     elif (0 < alpha[j]) and (constant > alpha[j]):
@@ -193,6 +193,6 @@ if __name__ == "__main__":
     labels = ''
     svmClassfier = SVMClassifier()
     sample_data, labels = svmClassfier.readTxt('svm_simple_test.txt')
-    alpha, b = svmClassfier.smoAlgorithm(sample_data=sample_data, labels=labels, constant=0.01, toler=0.001, max_iter=500)
+    alpha, b = svmClassfier.smoAlgorithm(sample_data=sample_data, labels=labels, constant=0.6, toler=0.001, max_iter=50)
     w = svmClassfier.calcW(alpha, sample_data, labels)
     svmClassfier.plotfig_SVM(sample_data, labels, w, b, alpha)
