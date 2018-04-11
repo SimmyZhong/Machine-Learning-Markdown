@@ -113,10 +113,9 @@ class SVMClassifier(object):
                         print('j 变化量太小')
                         continue
                     alpha[i] += (alpha_j_old - alpha[j]) * labels[j] * labels[i]
-                    # 这个地方没看懂
+
+                    # 这个地方看了好久才推导明白，具体可看博文
                     # w= Σ[1~n] ai*yi*xi => b = yj- Σ[1~n] ai*yi(xi*xj)
-                    # 所以：  b1 - b = (y1-y) - Σ[1~n] yi*(a1-a)*(xi*x1)
-                    # 为什么减2遍？ 因为是 减去Σ[1~n]，正好2个变量i和j，所以减2遍
                     b1 = b - Ei - labels[i] * (alpha[i] - alpha_i_old) * sample_data[i, :] * sample_data[i, :].T - \
                          labels[j] * (alpha[j] - alpha_j_old) * sample_data[i, :] * sample_data[j, :].T
                     b2 = b - Ej - labels[i] * (alpha[i] - alpha_i_old) * sample_data[i, :] * sample_data[j, :].T - \
