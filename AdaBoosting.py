@@ -1,5 +1,6 @@
 from numpy import mat, multiply, array, zeros, ones, shape
 import numpy as np
+from math import log, exp
 
 
 class AdaBoostingClassfier(object):
@@ -35,7 +36,7 @@ class AdaBoostingClassfier(object):
         if threshIneq == 'lt':
             bestClasEst[dataMatrix[:, i] <= threshVal] = -1.0
         else:
-            bestClasEst[dataMatrix[:, i] > threshVal] = 1.0
+            bestClasEst[dataMatrix[:, i] > threshVal] = -1.0
         return bestClasEst
 
     def builtStump(self, dataMatrix, labels, D):
@@ -47,34 +48,62 @@ class AdaBoostingClassfier(object):
         :return:最优分类结果，分类器信息，错误率
         """
 
-        labels = mat(labels).T
         m, n = shape(dataMatrix)
         minError = np.inf
-        retarray = mat(ones((m, 1)))
         bestClasEst = mat(zeros((m, 1)))
         stump = dict()
+        step = 10.0
         for i in range(n):
-            step = 10.0
             stepSize = (dataMatrix[:, i].max() - dataMatrix[:, i].min()) / step
             for j in range(-1, int(step)+1):
                 for method in ['lt', 'gt']:
-                    threshVal = dataMatrix[:, i].min() + j * stepSize
+                    threshVal = dataMatrix[:, i].min() + float(j) * stepSize
                     predictVals = self.stumpClassify(dataMatrix, i, threshVal, method)
+                    retarray = mat(ones((m, 1)))
                     retarray[predictVals == labels] = 0
-                    errorRate = retarray.T * D
-                    # print(bestClasEst, i, threshVal, method, '%.3f' % errorRate)
+                    errorRate = D.T * retarray
+                    # print(i, threshVal, method, '%.3f' % errorRate)
                     if errorRate < minError:
-                        bestClasEst = predictVals
+                        bestClasEst = predictVals.copy()
                         minError = errorRate
                         stump['threshVal'] = threshVal
                         stump['method'] = method
                         stump['i'] = i
         return bestClasEst, stump, minError
 
+    def adaBoostingClassfier(self, dataMatrix, labels):
+        """
+        基于单层决策树的训练函数
+        :param dataMatrix: 数据集
+        :param labels: 样本分类
+        :return:弱分类器集
+        """
+
+        dataMatrix = mat(dataMatrix)
+        labels = mat(labels).T
+        m, n = shape(dataMatrix)
+        D = mat(ones((m, 1)) / m)
+        bestClassifier = list()
+        aggClassEst = mat(zeros((m, 1)))
+        while True:
+            bestClasEst, stump, minError = self.builtStump(dataMatrix, labels, D)
+            alpha = float(log((1.0 - minError) / max(minError, 1e-16)) / 2.0)
+            stump['alpha'] = alpha
+            result = multiply(labels, bestClasEst)
+            result[result == 1] = exp(-alpha)
+            result[result == -1] = exp(alpha)
+            D = multiply(result, D) / D.sum()
+            bestClassifier.append(stump)
+            aggClassEst += alpha * bestClasEst
+            error_rate = ones((m, 1))
+            error_rate[np.sign(aggClassEst) == labels] = 0
+            print(error_rate.sum() / m)
+            if error_rate.sum() == 0:
+                break
+        return bestClassifier
+
 
 if __name__ == "__main__":
     adaboosting = AdaBoostingClassfier()
-    dataMatrix, labels = adaboosting.readFromTxt('svm_simple_test.txt')
-    D = mat(ones((shape(dataMatrix)[0], 1)) / 5)
-    bestClasEst, stump, minError = adaboosting.builtStump(dataMatrix, labels, D)
-    print(bestClasEst, stump, minError)
+    dataMatrix, labels = adaboosting.readFromTxt('text.txt')
+    print(adaboosting.adaBoostingClassfier(dataMatrix, labels))
