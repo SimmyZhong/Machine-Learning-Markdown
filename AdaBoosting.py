@@ -103,6 +103,13 @@ class AdaBoostingClassfier(object):
         return bestClassifier
 
     def adaClassfierTest(self, dataMatrix, classfierArray):
+        """
+        基于Adaboost分类的测试算法
+        :param dataMatrix: 测试数据集
+        :param classfierArray: 已训练好的分类器
+        :return: 测试分类结果
+        """
+
         dataMatrix = mat(dataMatrix)
         m, n =shape(dataMatrix)
         result = zeros((m, 1))
@@ -120,4 +127,4 @@ if __name__ == "__main__":
     adaboosting = AdaBoostingClassfier()
     dataMatrix, labels = adaboosting.readFromTxt('text.txt')
     classfierArray = adaboosting.adaBoostingClassfier(dataMatrix, labels)
-    print(adaboosting.adaClassfierTest([0.6, 1.5], classfierArray))
+    print(adaboosting.adaClassfierTest([[0.6, 1.5], [0, 0]], classfierArray))
