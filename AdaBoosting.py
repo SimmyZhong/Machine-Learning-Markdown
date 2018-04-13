@@ -97,13 +97,27 @@ class AdaBoostingClassfier(object):
             aggClassEst += alpha * bestClasEst
             error_rate = ones((m, 1))
             error_rate[np.sign(aggClassEst) == labels] = 0
-            print(error_rate.sum() / m)
+            # print(error_rate.sum() / m)
             if error_rate.sum() == 0:
                 break
         return bestClassifier
+
+    def adaClassfierTest(self, dataMatrix, classfierArray):
+        dataMatrix = mat(dataMatrix)
+        m, n =shape(dataMatrix)
+        result = zeros((m, 1))
+        for classfier in classfierArray:
+            threshVal = classfier['threshVal']
+            method = classfier['method']
+            i = classfier['i']
+            alpha = classfier['alpha']
+            result += self.stumpClassify(dataMatrix, i, threshVal, method) * alpha
+            # print(result)
+        return np.sign(result)
 
 
 if __name__ == "__main__":
     adaboosting = AdaBoostingClassfier()
     dataMatrix, labels = adaboosting.readFromTxt('text.txt')
-    print(adaboosting.adaBoostingClassfier(dataMatrix, labels))
+    classfierArray = adaboosting.adaBoostingClassfier(dataMatrix, labels)
+    print(adaboosting.adaClassfierTest([0.6, 1.5], classfierArray))
