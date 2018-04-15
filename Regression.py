@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import mat, shape, ones, zeros
+import matplotlib.pyplot as plt
 
 
 class StandRegresion(object):
@@ -22,8 +23,8 @@ class StandRegresion(object):
                 for i in range(num_figure - 1):
                     figures.append(float(data[i]))
                 dataMatrix.append(figures)
-                yAttr.append(float(data[num_figure]))
-        return dataMatrix, yAttr
+                yAttr.append(float(data[num_figure - 1]))
+        return mat(dataMatrix), mat(yAttr).T
 
     @staticmethod
     def standRegres(dataMatrix, yAttr):
@@ -33,18 +34,31 @@ class StandRegresion(object):
         :param yAttr: 输出值
         :return: 回归系数
         """
-        dataMatrix = mat(dataMatrix)
-        yAttr = mat(yAttr).T
         xTx = dataMatrix.T * dataMatrix
         if np.linalg.det(xTx) == 0:
             print('逆矩阵不存在,无法求解')
         ws = xTx.I * (dataMatrix.T * yAttr)
         return ws
 
+    @staticmethod
+    def figureShow(dataMatrix, yAttr, ws):
+        figure = plt.figure()
+
+        # add_subplot(349)函数的参数的意思是，将画布分成3行4列图像画在从左到右从上到下第9块
+        ax = figure.add_subplot(111)
+
+        ax.scatter(dataMatrix[:, 1].flatten().A[0], yAttr[:, 0].flatten().A[0])
+        dataMatrixCopy = dataMatrix.copy()
+        dataMatrixCopy.sort(0)
+        yHat = dataMatrixCopy * ws
+        ax.plot(dataMatrixCopy[:, 1], yHat)
+        plt.show()
+
 
 if __name__ == "__main__":
     fileName = 'data8-01.txt'
     regression = StandRegresion()
     dataMatrix, yAttr = regression.readFromTxtFile(fileName)
-    # ws = regression.standRegres(dataMatrix, yAttr)
-    # print(ws)
+    ws = regression.standRegres(dataMatrix, yAttr)
+    print(ws)
+    regression.figureShow(dataMatrix, yAttr, ws)
