@@ -31,13 +31,15 @@ class TreeRegression(object):
 
     @staticmethod
     def leafFunc(dataMatrix):
+        """计算均值"""
         return np.mean(dataMatrix[:, -1])
 
     @staticmethod
-    def varFunc():
-        pass
+    def varFunc(dataMatrix):
+        """计算数据集总方差"""
+        return np.var(dataMatrix[:, -1]) * shape(dataMatrix)[0]
 
-    def chooseBestFeature(self, dataMatrix, leafFunc, varFunc, ops=(1, 4)):
+    def chooseBestFeature(self, dataMatrix, ops=(1, 4)):
         """
         选取最优划分特征
         :param dataMatrix: 训练集
@@ -52,7 +54,7 @@ class TreeRegression(object):
         m, n = shape(dataMatrix)
 
         # 计算初始总方差
-        varDataMatrix = np.var(dataMatrix[:, -1]) * shape(dataMatrix)[0]
+        varDataMatrix = self.varFunc(dataMatrix)
 
         # 初始化
         bestS = np.inf
@@ -69,11 +71,9 @@ class TreeRegression(object):
                 # 若 左右子树小于自定义参数，则不划分
                 if len(leftDataSet) < ops[1] or len(rightDataSet) < ops[1]:
                     continue
-                varleftDataSet = np.var(leftDataSet[:, -1]) * shape(leftDataSet)[0]
-                varRightDataSet = np.var(rightDataSet[:, -1]) * shape(rightDataSet)[0]
-                sumS = varleftDataSet + varRightDataSet
+                sumS = self.varFunc(leftDataSet) + self.varFunc(rightDataSet)
 
-                # 若划分后左右子树方差和更小，则保存划分阈值和特征为最优
+                # 若划分后左右子树方差和变小，则保存划分阈值和特征为最优
                 if bestS > sumS:
                     bestS = sumS
                     bestFeature = feature
@@ -84,7 +84,7 @@ class TreeRegression(object):
             return None, self.leafFunc(dataMatrix)
         return bestFeature, bestVal
 
-    def createTreeRegression(self, dataMatrix, leafFunc, varFunc, ops=(1, 4)):
+    def createTreeRegression(self, dataMatrix, ops=(1, 4)):
         """
         创建树回归
         :param dataMatrix: 训练集
@@ -93,13 +93,13 @@ class TreeRegression(object):
         :param ops: 自定义参数组
         :return: 树回归
         """
-        feature, value = self.chooseBestFeature(dataMatrix, leafFunc, varFunc, ops)
+        feature, value = self.chooseBestFeature(dataMatrix, ops)
         if feature is None:
             return value
         treeRegress = dict()
         leftDataSet, rightDataSet = self.splitDataSet(dataMatrix, feature, value)
-        treeRegress['left'] = self.createTreeRegression(leftDataSet, leafFunc, varFunc, ops=(1, 4))
-        treeRegress['right'] = self.createTreeRegression(rightDataSet, leafFunc, varFunc, ops=(1, 4))
+        treeRegress['left'] = self.createTreeRegression(leftDataSet, ops=(1, 4))
+        treeRegress['right'] = self.createTreeRegression(rightDataSet, ops=(1, 4))
         treeRegress['feature'] = feature
         treeRegress['val'] = value
         return treeRegress
