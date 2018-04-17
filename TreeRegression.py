@@ -57,9 +57,7 @@ class TreeRegression(object):
         varDataMatrix = self.varFunc(dataMatrix)
 
         # 初始化
-        bestS = np.inf
-        bestFeature = 0
-        bestVal = 0
+        bestS, bestFeature, bestVal = np.inf, 0, 0
 
         # 遍历特征，以及特征值
         for feature in range(n - 1):
@@ -93,6 +91,10 @@ class TreeRegression(object):
         :param ops: 自定义参数组
         :return: 树回归
         """
+        # ops=(1,4)，非常重要，因为它决定了决策树划分停止的threshold值，被称为预剪枝（prepruning），其实也就是用于控制函数的停止时机。
+        # 之所以这样说，是因为它防止决策树的过拟合，所以当误差的下降值小于tolS，或划分后的集合size小于tolN时，选择停止继续划分。
+        # 最小误差下降值，划分后的误差减小小于这个差值，就不用继续划分
+
         feature, value = self.chooseBestFeature(dataMatrix, ops)
         if feature is None:
             return value
@@ -103,6 +105,38 @@ class TreeRegression(object):
         treeRegress['feature'] = feature
         treeRegress['val'] = value
         return treeRegress
+
+    @staticmethod
+    def isTree(treeRegress):
+        """判断子树是否叶节点"""
+        return isinstance(treeRegress, dict)
+
+    def getMean(self, treeRegress):
+        """遍历树回归知道叶节点，然后计算均值"""
+        if self.isTree(treeRegress['left']):
+            treeRegress['left'] = self.getMean(treeRegress['left'])
+        if self.isTree(treeRegress['right']):
+            treeRegress['right'] = self.getMean(treeRegress['right'])
+        return (treeRegress['left'] + treeRegress['right']) / 2.0
+
+    def treePrune(self, treeRegress, testData):
+        """
+        树回归后剪枝
+        :param treeRegress: 训练好的树回归模型
+        :param testData: 测试数据集
+        :return: 剪枝后的树回归
+        """
+        if shape(testData)[0] == 0: return self.getMean(treeRegress)
+        leftDataSet, rightDataSet = self.splitDataSet(testData, treeRegress['feature'], treeRegress['val'])
+        if self.isTree(treeRegress['left']):
+            treeRegress['left'] = self.treePrune(treeRegress['left'], leftDataSet)
+        if self.isTree(treeRegress['right']):
+            treeRegress['right'] = self.treePrune(treeRegress['right'], rightDataSet)
+        if not self.isTree(treeRegress['left']) and self.isTree(treeRegress['right']):
+            varS = self.varFunc(leftDataSet) + self.varFunc(rightDataSet)
+            var_unsplit = self.varFunc(testData)
+            if var_unsplit < varS:
+                return np.mean(testData[:, -1])
 
 
 if __name__ == "__main__":
