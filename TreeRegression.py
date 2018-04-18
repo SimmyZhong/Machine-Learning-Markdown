@@ -126,8 +126,10 @@ class TreeRegression(object):
         :param testData: 测试数据集
         :return: 剪枝后的树回归
         """
-        if shape(testData)[0] == 0: return self.getMean(treeRegress)
-        leftDataSet, rightDataSet = self.splitDataSet(testData, treeRegress['feature'], treeRegress['val'])
+        if shape(testData)[0] == 0:
+            return self.getMean(treeRegress)
+        if self.isTree(treeRegress['left']) or self.isTree(treeRegress['right']):
+            leftDataSet, rightDataSet = self.splitDataSet(testData, treeRegress['feature'], treeRegress['val'])
         if self.isTree(treeRegress['left']):
             treeRegress['left'] = self.treePrune(treeRegress['left'], leftDataSet)
         if self.isTree(treeRegress['right']):
@@ -137,6 +139,75 @@ class TreeRegression(object):
             var_unsplit = self.varFunc(testData)
             if var_unsplit < varS:
                 return np.mean(testData[:, -1])
+            else:
+                return treeRegress
+        return treeRegress
+
+
+class ModelTree(object):
+    """模型树，和回归树区别在于叶节点不是用常数表示，而是分段线性函数"""
+
+    def splitTree(self, dataSet, feature, val):
+        """数据划分"""
+
+        leftTree = dataSet[dataSet[:, feature] < val]
+        rightTree = dataSet[dataSet[:, feature] >= val]
+        return leftTree, rightTree
+
+    @staticmethod
+    def transfer(dataSet):
+        """转换函数"""
+        m, n = shape(dataSet)
+        return dataSet[:, :n - 1], dataSet[:, -1]
+
+    def leafFunc(self, dataSet):
+        """叶节点"""
+
+        xMatrix, yMatrix = self.transfer(dataSet)
+        xTx = xMatrix.T * xMatrix
+        if np.linalg.det(xTx) == 0:
+            print('不存在逆矩阵')
+        ws = xTx.I * xMatrix * yMatrix
+        return ws, xMatrix, yMatrix
+
+    def errFunc(self, dataSet):
+        """求取回归的总方差"""
+
+        ws, xMatrix, yMatrix = self.leafFunc(dataSet)
+        yHat = xMatrix * mat(ws).T
+        return np.sum((yMatrix - yHat) ** 2)
+
+    def chooseBestFeature(self, dataSet, leafFunc, errFunc, ops):
+        """选取最优划分特征"""
+
+        m ,n = shape(dataSet)
+        if set(dataSet[:, -1].tolist()[0]) == 1:
+            return None, leafFunc(dataSet)
+        bestS, bestFeature, bestVal = np.inf, 0, 0
+        for i in range(n - 1):
+            for val in set(dataSet[:, i].tolist()[0]):
+                leftTree, rightTree = self.splitTree(dataSet, i, val)
+                if shape(leftTree)[1] < ops[1] or shape(rightTree)[1] < ops[1]:
+                    continue
+                errS = errFunc(leftTree) + errFunc(rightTree)
+                if bestS > errS:
+                    bestFeature = i
+                    bestVal = val
+        if errFunc(dataSet) - bestS < ops[0]:
+            return None, leafFunc(dataSet)
+        return bestFeature, bestVal
+
+    def createModelTree(self, dataSet, leafFunc, errFunc, ops=(1, 4)):
+        """构建模型树"""
+
+        feature, val = self.chooseBestFeature(dataSet, leafFunc, errFunc, ops)
+        if feature is None:
+            return leafFunc(dataSet)
+        modelTree = dict(feature=feature, val=val)
+        leftTree, rightTree = self.splitTree(dataSet, feature, val)
+        modelTree['left'] = self.createModelTree(leftTree, leafFunc, errFunc, ops=(1, 4))
+        modelTree['right'] = self.createModelTree(rightTree, leafFunc, errFunc, ops=(1, 4))
+        return modelTree
 
 
 if __name__ == "__main__":
