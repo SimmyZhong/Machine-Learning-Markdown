@@ -150,15 +150,17 @@ class ModelTree(object):
     def splitTree(self, dataSet, feature, val):
         """数据划分"""
 
-        leftTree = dataSet[dataSet[:, feature] < val]
-        rightTree = dataSet[dataSet[:, feature] >= val]
+        leftTree = dataSet[np.nonzero(dataSet[:, feature] > val)[0], :]
+        rightTree = dataSet[np.nonzero(dataSet[:, feature] <= val)[0], :]
         return leftTree, rightTree
 
     @staticmethod
     def transfer(dataSet):
         """转换函数"""
         m, n = shape(dataSet)
-        return dataSet[:, :n - 1], dataSet[:, -1]
+        xMatrix, yMatrix = mat(np.ones(m, n)), mat(np.ones(m, 1))
+        xMatrix[:, 1:n], yMatrix = dataSet[:, :n - 1], dataSet[:, -1]
+        return xMatrix, yMatrix
 
     def leafFunc(self, dataSet):
         """叶节点"""
@@ -167,25 +169,26 @@ class ModelTree(object):
         xTx = xMatrix.T * xMatrix
         if np.linalg.det(xTx) == 0:
             print('不存在逆矩阵')
-        ws = xTx.I * xMatrix * yMatrix
-        return ws, xMatrix, yMatrix
+        ws = xTx.I * xMatrix.T * yMatrix
+        return ws
 
     def errFunc(self, dataSet):
         """求取回归的总方差"""
 
-        ws, xMatrix, yMatrix = self.leafFunc(dataSet)
+        xMatrix, yMatrix = self.transfer(dataSet)
+        ws = self.leafFunc(dataSet)
         yHat = xMatrix * mat(ws).T
-        return np.sum((yMatrix - yHat) ** 2)
+        return np.sum(np.power((yMatrix - yHat), 2))
 
     def chooseBestFeature(self, dataSet, leafFunc, errFunc, ops):
         """选取最优划分特征"""
 
         m ,n = shape(dataSet)
-        if set(dataSet[:, -1].tolist()[0]) == 1:
+        if len(set(dataSet[:, -1].T.tolist()[0])) == 1:
             return None, leafFunc(dataSet)
         bestS, bestFeature, bestVal = np.inf, 0, 0
         for i in range(n - 1):
-            for val in set(dataSet[:, i].tolist()[0]):
+            for val in set(dataSet[:, i].T.tolist()[0]):
                 leftTree, rightTree = self.splitTree(dataSet, i, val)
                 if shape(leftTree)[1] < ops[1] or shape(rightTree)[1] < ops[1]:
                     continue
@@ -193,6 +196,7 @@ class ModelTree(object):
                 if bestS > errS:
                     bestFeature = i
                     bestVal = val
+                    bestS = errS
         if errFunc(dataSet) - bestS < ops[0]:
             return None, leafFunc(dataSet)
         return bestFeature, bestVal
@@ -202,7 +206,7 @@ class ModelTree(object):
 
         feature, val = self.chooseBestFeature(dataSet, leafFunc, errFunc, ops)
         if feature is None:
-            return leafFunc(dataSet)
+            return val
         modelTree = dict(feature=feature, val=val)
         leftTree, rightTree = self.splitTree(dataSet, feature, val)
         modelTree['left'] = self.createModelTree(leftTree, leafFunc, errFunc, ops=(1, 4))
