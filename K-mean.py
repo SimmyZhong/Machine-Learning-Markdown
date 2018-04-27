@@ -34,7 +34,9 @@ def createCenterField(dataSet, k):
     m, n = shape(dataSet)
     centerFiled = mat(zeros((k, n)))
     for i in range(n):
-        iRange = float(np.max(dataSet[:, i]) - np.min(dataSet[:, i]))
+        min_ = np.min(dataSet[:, i]) if not np.min(dataSet[:, i])==np.nan else 0
+        max_ = np.max(dataSet[:, i]) if not np.max(dataSet[:, i])==np.nan else 0
+        iRange = float(max_ - min_)
         centerFiled[:, i] = np.min(dataSet[:, i]) + iRange * mat(np.random.rand(k, 1))
     return centerFiled
 
@@ -89,13 +91,22 @@ def binKmeans(dataSet, distanceFunc, k):
             centroidMat, ssesplit = createKMeanClustering(cluster, distanceFunc, 2)
             sseNotSplit = sum(clusterAssment[np.nonzero(clusterAssment[:, 0].A != i)[0]][:, 1])
             sse = sseNotSplit + sum(ssesplit[:, 1])
+
+            # 选取划分后SSE最小的簇进行二分K均值聚类
             if sse < bestSse:
                 bestSse, bestIndex = sse, i
-
         centroidMat, ssesplit = createKMeanClustering(dataSet[np.nonzero(clusterAssment[:, 0].A == bestIndex)[0]], distanceFunc, 2)
+
+        # 因为是二分K聚类算法，所以聚类后索引为0和1,
+        ssesplit[np.nonzero(ssesplit[:, 0].A == 0)[0], 0] = bestIndex
+        ssesplit[np.nonzero(ssesplit[:, 0].A == 1)[0], 0] = len(centroids)
+
+        # 更新簇的分配结果
+        clusterAssment[np.nonzero(clusterAssment[:, 0].A == bestIndex)[0], :] = ssesplit
+
+        # 更新质心
         centroids[bestIndex] = centroidMat[0, :].tolist()[0]
         centroids.append(centroidMat[1, :].tolist()[0])
-        clusterAssment[np.nonzero(clusterAssment[:, 0].A == bestIndex)[0]] = ssesplit
     return mat(centroids), clusterAssment
 
 if __name__ == "__main__":
@@ -117,7 +128,7 @@ if __name__ == "__main__":
                [-3.53973889, -2.89384326]]
     # centroids, clusterAssment = createKMeanClustering(np.mat(dataSet), errFunc, 3)
     centroids, clusterAssment = binKmeans(np.mat(dataSet), errFunc, 3)
-    print(centroids)
+    # print(centroids)
     fig = plt.figure()
     ax_1 = fig.add_subplot(111)
     ax_1.scatter(np.mat(dataSet).A[:, 0], np.mat(dataSet).A[:, 1], color='red')
