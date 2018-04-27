@@ -191,7 +191,7 @@ if __name__ == "__main__":
     sample_data = ''
     labels = ''
     svmClassfier = SVMClassifier()
-    sample_data, labels = svmClassfier.readTxt('svm_simple_test.txt')
+    sample_data, labels = svmClassfier.readTxt('text.txt')
     alpha, b = svmClassfier.smoAlgorithm(sample_data=sample_data, labels=labels, constant=0.6, toler=0.001, max_iter=50)
     w = svmClassfier.calcW(alpha, sample_data, labels)
     svmClassfier.plotfig_SVM(sample_data, labels, w, b, alpha)
