@@ -1,6 +1,7 @@
 # K均值聚类算法
 import numpy as np
 from numpy import mat, shape, zeros
+import matplotlib.pyplot as plt
 
 
 def readFromTxtFile(fileName):
@@ -60,17 +61,34 @@ def createKMeanClustering(dataSet, distanceFunc, k):
                 if distance < minDis:
                     minDis = distance
                     bestIndex = j
-            if clusterAssment[i, :] != bestIndex:
-                clusterAssment = True
-            clusterAssment[i, 0],  clusterAssment[i, 0] = bestIndex, minDis ** 2
+            if clusterAssment[i, 0] != bestIndex:
+                changeFlag = True
+            clusterAssment[i, 0], clusterAssment[i, 1] = bestIndex, minDis ** 2
         for i in range(k):
             centroids[i, :] = meanFunc(dataSet[np.nonzero(clusterAssment[:, 0].A == i)[0]])
         return centroids, clusterAssment
 
 
-
 if __name__ == "__main__":
     # 测试案例
     data = np.random.randint(0, 4, 12).reshape(3, 4)
-    print(data)
-    print(createCenterField(data, 2))
+    # print(data)
+    # print(createCenterField(data, 2))
+    dataSet = [[3.15357605, -3.94962877],
+               [3.3593825, 1.05965957],
+               [2.41900657, 3.30513371],
+               [-2.80505526, -3.73280289],
+               [2.35622556, -3.02056425],
+               [2.95373358, 2.32801413],
+               [2.46154315, 2.78737555],
+               [-3.38237045, -2.9473363],
+               [2.65077367, -2.79019029],
+               [2.6265299, 3.10868015],
+               [-2.46154315, -2.78737555],
+               [-3.53973889, -2.89384326]]
+    centroids, clusterAssment = createKMeanClustering(np.mat(dataSet), errFunc, 3)
+    fig = plt.figure()
+    ax_1 = fig.add_subplot(111)
+    ax_1.scatter(np.mat(dataSet).A[:, 0], np.mat(dataSet).A[:, 1], color='red')
+    ax_1.scatter(centroids.A[:, 0], centroids.A[:, 1], color='black')
+    plt.show()
