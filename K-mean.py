@@ -34,7 +34,7 @@ def createCenterField(dataSet, k):
     m, n = shape(dataSet)
     centerFiled = mat(zeros((k, n)))
     for i in range(n):
-        iRange = np.max(dataSet[:, i]) - np.min(dataSet[:, i])
+        iRange = float(np.max(dataSet[:, i]) - np.min(dataSet[:, i]))
         centerFiled[:, i] = np.min(dataSet[:, i]) + iRange * mat(np.random.rand(k, 1))
     return centerFiled
 
@@ -55,7 +55,7 @@ def createKMeanClustering(dataSet, distanceFunc, k):
     while changeFlag:
         changeFlag = False
         for i in range(m):
-            minDis, bestIndex, bestErr = np.inf, 0, 0
+            minDis, bestIndex = np.inf, -1
             for j in range(k):
                 distance = distanceFunc(dataSet[i, :], centroids[j, :])
                 if distance < minDis:
@@ -63,10 +63,10 @@ def createKMeanClustering(dataSet, distanceFunc, k):
                     bestIndex = j
             if clusterAssment[i, 0] != bestIndex:
                 changeFlag = True
-            clusterAssment[i, 0], clusterAssment[i, 1] = bestIndex, minDis ** 2
+            clusterAssment[i, :] = bestIndex, minDis ** 2
         for i in range(k):
             centroids[i, :] = meanFunc(dataSet[np.nonzero(clusterAssment[:, 0].A == i)[0]])
-        return centroids, clusterAssment
+    return centroids, clusterAssment
 
 
 if __name__ == "__main__":
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     # print(data)
     # print(createCenterField(data, 2))
     dataSet = [[3.15357605, -3.94962877],
-               [3.3593825, 1.05965957],
+               [3.3593825, 2.05965957],
                [2.41900657, 3.30513371],
                [-2.80505526, -3.73280289],
                [2.35622556, -3.02056425],
