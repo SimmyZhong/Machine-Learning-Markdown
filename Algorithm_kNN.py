@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import tile
 
 
 class Algorithm_kNN(object):

@@ -42,7 +42,7 @@ def aprioriGen(supportSet, k):
                 results.append(supportSet[i] | supportSet[j])
     return results
 
-def apriori(dataSet, minSupport=0.4):
+def apriori(dataSet, minSupport=0.6):
     supportSet = createSets(dataSet)
     dataSet = list(map(set, dataSet))
     resultList, supportData = scanD(dataSet, supportSet, minSupport)
@@ -63,4 +63,4 @@ if __name__ == "__main__":
     # print(scanD(dataSet, createSets(dataSet), 0.5))
     # print(createSets(dataSet))
     # print(aprioriGen(createSets(dataSet), 1))
-    # print(apriori(dataSet))
+    print(apriori(dataSet))

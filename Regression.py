@@ -120,3 +120,4 @@ if __name__ == "__main__":
     # regression.figureShow(dataMatrix, yAttr, ws)
     results = regression.weightRegresText(dataMatrix, dataMatrix, yAttr, k=0.01)
     pltShow(dataMatrix, yAttr, results)
+
