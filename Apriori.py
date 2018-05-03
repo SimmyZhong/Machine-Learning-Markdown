@@ -27,7 +27,7 @@ def scanD(dataSet, supportSets, minSupport):
                 results[j] = results[j] + 1 if j in results.keys() else 1
     results = dict(filter(lambda x: x[1]/totalSum >= minSupport, results.items()))
     resultsKeys = list(results.keys())
-    results = list(map(lambda x: {x[0]: x[1]/totalSum}, results.items()))
+    results = dict(map(lambda x: (x[0], x[1]/totalSum), results.items()))
     return resultsKeys, results
 
 def aprioriGen(supportSet, k):
@@ -54,13 +54,63 @@ def apriori(dataSet, minSupport=0.6):
         if not rL:
             break
         resultList.append(rL)
-        supportData.append(sD)
+        supportData.update(sD)
         k += 1
     return resultList, supportData
 
+
+def generateRules(resultList, supportData, minConf=0.7):
+    """
+    关联规则生成
+    :param resultList: 频繁项集列表
+    :param supportData: 支持数据列表
+    :param minConf: 最小可信度阈值
+    :return: 关联规则
+    """
+    RulesList = list()
+    if not resultList:
+        return
+    for i in range(1, len(resultList)):
+        print(i)
+        for freqSet in resultList[i]:
+            items = [frozenset([x]) for x in freqSet]
+            if i > 1:
+                print(freqSet)
+                rulesFromConseq(freqSet, items, supportData, RulesList, minConf)
+            else:
+                calConf(freqSet, items, supportData, RulesList, minConf)
+    return RulesList
+
+
+def calConf(freqSet, items, supportData, RulesList, minConf):
+    """
+    寻找满足最小阈值的关联规则"""
+    prunedH = list()
+    for item in items:
+        conf = supportData[freqSet] / supportData[freqSet - item]
+        if conf > minConf:
+            print(freqSet-item, '-->', item, 'conf: ', conf)
+            RulesList.append((freqSet-item, item, conf))
+            prunedH.append(item)
+    return prunedH
+
+
+def rulesFromConseq(freqSet, items, supportData, RulesList, minConf):
+    """构建关联规则"""
+    m = len(items[0])
+    if len(freqSet) > (m + 1):
+        Hmp1 = aprioriGen(items, m)
+        Hmp1 = calConf(freqSet, items, supportData, RulesList, minConf)
+        if len(Hmp1) > 1:
+            rulesFromConseq(freqSet, items, supportData, RulesList, minConf)
+
+
+
 if __name__ == "__main__":
-    dataSet = [['1', '2', '3', '3'], ['4', '6', '6', '7'], ['1', '3', '4'], ['5', '6', '1'], ['1', '5', '3']]
+    dataSet = [['1', '3', '4'], ['2', '3', '5'], ['1', '2', '3', '5'], ['2', '5']]
     # print(scanD(dataSet, createSets(dataSet), 0.5))
     # print(createSets(dataSet))
-    # print(aprioriGen(createSets(dataSet), 1))
-    print(apriori(dataSet))
+    # print(aprioriGen(createSets(['3', '1', '2']), 1))
+    resultList, supportData = (apriori(dataSet))
+    print(resultList, supportData)
+    generateRules(resultList, supportData)
