@@ -17,9 +17,16 @@ class FPTree(object):
         self.parentnode = parentnode
         self.children = {}
 
+    def disp(self, ind=1):
+        """disp(用于将树以文本形式显示)
+        """
+        print('  ' * ind, self.name, ' ', self.count)
+        for child in self.children.values():
+            child.disp(ind + 1)
+
 
 def createFeature(dataSet, supportConf):
-    """数据预处理，返回处理过的数据集dict和频繁项集"""
+    """构建FP树"""
     results = dict()
     supportData = dict()
     for data in dataSet:
@@ -30,24 +37,26 @@ def createFeature(dataSet, supportConf):
     supportData = dict(filter(lambda x: x[1] / len(results) > supportConf, supportData.items()))
     supportData = dict(map(lambda x: (x[0], x[1] / len(results)), supportData.items()))
     frequentSet = list(supportData.keys())
-    return results, frequentSet, supportData
+    if not len(frequentSet):
+        return None, None
 
-
-def createFPTree(dataSet, frequentSet, supportData):
-    """构建FP树"""
     # 初始化
     fpTree = FPTree('FP_tree', 1, None)
 
     # 对数据集按频繁项集排序
-    for keys in dataSet.keys():
+    for keys in results.keys():
         filterKeys = filter(lambda x: frozenset(x) in frequentSet, keys)
         sortKeys = sorted(filterKeys, key=lambda x: supportData[frozenset(x)], reverse=True)
-        print(sortKeys)
-        for item in sortKeys:
-            if item in fpTree.children.keys():
-                fpTree.children[item].count += dataSet[keys]
-            else:
-                fpTree.children[item] = FPTree(item, dataSet[keys], )
+        updateTree(sortKeys, fpTree, results[keys])
+    return fpTree, frequentSet
+
+def updateTree(sortKeys, inTree, count):
+        if sortKeys[0] in inTree.children.keys():
+            inTree.children[sortKeys[0]].count += count
+        else:
+            inTree.children[sortKeys[0]] = FPTree(sortKeys[0], count, inTree)
+        if len(sortKeys) > 1:
+            updateTree(sortKeys[1:], inTree.children[sortKeys[0]], count)
 
 
 if __name__ == "__main__":
@@ -58,5 +67,6 @@ if __name__ == "__main__":
                # ['r', 'x', 'n', 'o', 's', 's', 'o'],
                ['y', 'r', 'x', 'z', 'q', 't', 'p'],
                ['y', 'z', 'x', 'e', 'q', 's', 't', 'm']]
-    results, frequentSet, supportData = createFeature(dataSet, supportConf=0.4)
-    sortedDataSet = createFPTree(results, frequentSet, supportData)
+    fptree, frequentSet = createFeature(dataSet, supportConf=0.4)
+    fptree.disp()
+    print(frequentSet)
