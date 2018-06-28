@@ -35,4 +35,5 @@ def pca(dataSet, topNfeat=9999):
 
 if __name__ == "__main__":
     dataSet = readFromTxt('data_PCA.txt')
+    # 测试
     print(pca(dataSet))#1213131321dfdfdsafsdf4
